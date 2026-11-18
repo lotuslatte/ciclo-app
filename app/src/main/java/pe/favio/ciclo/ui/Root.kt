@@ -124,6 +124,7 @@ fun CicloRoot(store: Store, data: AppData) {
     val scope = rememberCoroutineScope()
     var showGuide by rememberSaveable { mutableStateOf(false) }
     var showStats by rememberSaveable { mutableStateOf(false) }
+    var showPrivacy by rememberSaveable { mutableStateOf(false) }
     val flags = remember(data, today) {
         Insights.figoFlags(Insights.history(data.bleeds, data.entries, today), p.isOpen, today)
     }
@@ -161,7 +162,7 @@ fun CicloRoot(store: Store, data: AppData) {
     }
 
     // Back from any other tab returns to "Hoy" before leaving the app.
-    BackHandler(enabled = tab != Tab.HOY && !showStats) { tab = Tab.HOY }
+    BackHandler(enabled = tab != Tab.HOY && !showStats && !showPrivacy) { tab = Tab.HOY }
 
     Scaffold(
         containerColor = C.Bg,
@@ -174,7 +175,7 @@ fun CicloRoot(store: Store, data: AppData) {
                 Tab.entries.forEach { t ->
                     NavigationBarItem(
                         selected = tab == t,
-                        onClick = { tab = t; showStats = false },
+                        onClick = { tab = t; showStats = false; showPrivacy = false },
                         icon = { Icon(painterResource(t.icon), null) },
                         label = { Text(t.label) },
                         colors = NavigationBarItemDefaults.colors(
@@ -190,7 +191,9 @@ fun CicloRoot(store: Store, data: AppData) {
         },
     ) { padding ->
         Box(Modifier.padding(padding)) {
-            if (showStats) {
+            if (showPrivacy) {
+                PrivacidadScreen(onBack = { showPrivacy = false })
+            } else if (showStats) {
                 EstadisticasScreen(p, data, today, onBack = { showStats = false })
             } else when (tab) {
                 Tab.HOY -> HoyScreen(
@@ -219,6 +222,7 @@ fun CicloRoot(store: Store, data: AppData) {
                     onRestore = actions::restore,
                     onWipe = actions::wipe,
                     onShowGuide = { showGuide = true },
+                    onShowPrivacy = { showPrivacy = true },
                     copyDates = actions::copyDates,
                     onRestoreCopy = actions::restoreCopy,
                 )

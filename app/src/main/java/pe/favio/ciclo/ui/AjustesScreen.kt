@@ -83,6 +83,7 @@ fun AjustesScreen(
     onRestore: (Backup) -> Unit,
     onWipe: () -> Unit,
     onShowGuide: () -> Unit,
+    onShowPrivacy: () -> Unit,
     copyDates: () -> List<LocalDate>,
     onRestoreCopy: (LocalDate) -> Boolean,
 ) {
@@ -220,6 +221,8 @@ fun AjustesScreen(
             SwitchRow("Bloquear con PIN", "Se pide al abrir la app", s.pinEnabled) { on ->
                 pinDialog = if (on) PinMode.CREATE else PinMode.REMOVE
             }
+            HorizontalDivider(color = C.Divider)
+            TextButton(onShowPrivacy, Modifier.padding(horizontal = 4.dp)) { Text("Política de privacidad", color = C.RedText) }
         }
 
         Section("Informe para tu médico")
