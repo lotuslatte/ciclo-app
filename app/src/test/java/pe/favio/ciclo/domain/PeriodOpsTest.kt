@@ -40,14 +40,14 @@ class PeriodOpsTest {
     }
 
     @Test
-    fun endOn_closesOngoingPeriod() {
-        val out = PeriodOps.endOn(listOf(Bleed(d("2026-03-07"), null)), today, today, 5)
+    fun endHere_closesOngoingPeriod() {
+        val out = PeriodOps.apply(listOf(Bleed(d("2026-03-07"), null)), PeriodAction.END_HERE, today, today, 5)
         assertEquals(listOf(Bleed(d("2026-03-07"), today)), out)
     }
 
     @Test
-    fun endOn_canExtendAClosedPeriod() {
-        val out = PeriodOps.endOn(listOf(Bleed(d("2026-03-01"), d("2026-03-04"))), d("2026-03-06"), today, 5)
+    fun extendEnd_lengthensAClosedPeriod() {
+        val out = PeriodOps.apply(listOf(Bleed(d("2026-03-01"), d("2026-03-04"))), PeriodAction.EXTEND_END, d("2026-03-06"), today, 5)
         assertEquals(listOf(Bleed(d("2026-03-01"), d("2026-03-06"))), out)
     }
 

@@ -36,7 +36,6 @@ object C {
     val RedOnLight = Color(0xFFA92A41)
 
     val Lav = Color(0xFF3A2D5C)
-    val LavBorder = Color(0xFF6B58A8)
     val LavText = Color(0xFFCDBEFF)
     val Ovul = Color(0xFF7657D1)
 

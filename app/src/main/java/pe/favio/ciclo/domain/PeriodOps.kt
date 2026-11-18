@@ -146,13 +146,6 @@ object PeriodOps {
         return normalize(bleeds + new, today, avgLen)
     }
 
-    /** Marks [d] as the last day of the period that contains it (or the ongoing one before it). */
-    fun endOn(bleeds: List<Bleed>, d: LocalDate, today: LocalDate, avgLen: Int): List<Bleed> {
-        val target = bleeds.filter { !it.start.isAfter(d) }.maxByOrNull { it.start } ?: return bleeds
-        if (daysBetween(target.start, d) > STALE_OPEN_DAYS) return bleeds
-        return normalize(bleeds.map { if (it == target) it.copy(end = d) else it }, today, avgLen)
-    }
-
     fun remove(bleeds: List<Bleed>, d: LocalDate, today: LocalDate): List<Bleed> {
         val target = covering(bleeds, d, today) ?: return bleeds
         return bleeds - target
