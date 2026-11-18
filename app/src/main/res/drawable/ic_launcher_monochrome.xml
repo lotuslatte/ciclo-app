@@ -1,0 +1,13 @@
+<!-- Single-tone layer for themed icons: the system tints it, so only the shape matters. The thicker
+     arc stands in for the coloured period segment of the full icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:strokeColor="#FF000000" android:strokeWidth="4" android:fillColor="#00000000"
+        android:pathData="M54,32a22,22 0,1 1,0 44a22,22 0,1 1,0 -44z" />
+    <path android:strokeColor="#FF000000" android:strokeWidth="10" android:fillColor="#00000000"
+        android:strokeLineCap="round"
+        android:pathData="M54,32a22,22 0,0 1,22 22" />
+    <path android:fillColor="#FF000000"
+        android:pathData="M54,49a5,5 0,1 1,0 10a5,5 0,1 1,0 -10z" />
+</vector>
