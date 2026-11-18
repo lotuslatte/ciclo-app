@@ -81,4 +81,76 @@ class StoreTest {
         assertTrue(s.restoreCopy(LocalDate.of(2026, 3, 2)))
         assertEquals(listOf(Period("2026-01-01")), s.data.value.periods)
     }
+
+    @Test
+    fun restoreCopy_keepsTheCurrentPin() {
+        val dir = tmp.newFolder()
+        val s = store(dir)
+        s.update { it.copy(periods = listOf(Period("2026-01-01")), settings = it.settings.copy(pinHash = "old", pinSalt = "old", onboarded = true)) }
+        now = now.plusDays(1)
+        s.update { it.copy(periods = emptyList(), settings = it.settings.copy(pinHash = "new", pinSalt = "new")) }
+
+        assertTrue(s.restoreCopy(LocalDate.of(2026, 3, 2)))
+        assertEquals(listOf(Period("2026-01-01")), s.data.value.periods)
+        assertEquals("new", s.data.value.settings.pinHash)
+        assertEquals("new", s.data.value.settings.pinSalt)
+        assertTrue(s.data.value.settings.onboarded)
+    }
+
+    @Test
+    fun wipe_leavesNothingOnDisk() {
+        val dir = tmp.newFolder()
+        val s = store(dir)
+        s.update(withPeriod("2026-01-01"))
+        now = now.plusDays(1)
+        s.update(withPeriod("2026-01-29")) // creates an automatic copy
+        File(dir, "ciclo.json.danado-20260101-000000").writeText("x")
+        File(dir, "otro.txt").writeText("not ours")
+        assertTrue(s.copyDates().isNotEmpty())
+
+        s.wipe()
+
+        assertEquals(AppData(), s.data.value)
+        assertTrue(s.copyDates().isEmpty())
+        assertEquals(listOf("otro.txt"), dir.walkTopDown().filter { it.isFile }.map { it.name }.toList())
+        assertEquals(AppData(), store(dir).data.value)
+        assertNull(store(dir).loadProblem)
+    }
+
+    @Test
+    fun wipe_thenNewData_doesNotBringBackOldCopies() {
+        val dir = tmp.newFolder()
+        val s = store(dir)
+        s.update(withPeriod("2026-01-01"))
+        s.wipe()
+        s.update(withPeriod("2026-02-01"))
+        assertTrue(s.copyDates().isEmpty()) // nothing existed before this first write
+        assertEquals(listOf(Period("2026-02-01")), store(dir).data.value.periods)
+    }
+
+    @Test
+    fun fileWithUnreadableDate_isTreatedAsDamaged() {
+        val dir = tmp.newFolder()
+        File(dir, "ciclo.json").writeText("""{"periods":[{"start":"2026-02-30"}]}""")
+        val s = store(dir)
+        assertNotNull(s.loadProblem)
+        assertEquals(AppData(), s.data.value)
+        assertTrue(s.data.value.bleeds.isEmpty()) // must not throw
+    }
+
+    @Test
+    fun outOfRangeValuesInTheFile_areBroughtIntoRange() {
+        val dir = tmp.newFolder()
+        File(dir, "ciclo.json").writeText(
+            """{"periods":[{"start":"2026-02-10","end":"2026-02-01"}],
+               "logs":{"2026-02-10":{"flow":9,"mood":-3,"pain":40}},
+               "settings":{"defaultCycle":400,"defaultPeriod":0,"remindDaysBefore":99}}""",
+        )
+        val d = store(dir).data.value
+        assertEquals(listOf(Period("2026-02-10", "2026-02-10")), d.periods)
+        assertEquals(DayLog(flow = 3, mood = 0, pain = 10), d.logs["2026-02-10"])
+        assertEquals(45, d.settings.defaultCycle)
+        assertEquals(2, d.settings.defaultPeriod)
+        assertEquals(3, d.settings.remindDaysBefore)
+    }
 }

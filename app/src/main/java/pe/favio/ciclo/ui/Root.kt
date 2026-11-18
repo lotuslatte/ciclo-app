@@ -87,7 +87,10 @@ class Actions(private val store: Store) {
 
     fun restoreCopy(date: LocalDate): Boolean = store.restoreCopy(date)
 
-    fun wipe() = store.update { AppData() }
+    fun wipe() {
+        undoPeriods = null
+        store.wipe()
+    }
 }
 
 @Composable

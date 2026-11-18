@@ -78,6 +78,12 @@ object Reminders {
         }
     }
 
+    /** Clears shown notifications and the record of which reminders were already sent. */
+    fun forget(ctx: Context) {
+        NotificationManagerCompat.from(ctx).cancelAll()
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
+    }
+
     @SuppressLint("MissingPermission")
     fun show(ctx: Context, id: Int, title: String, text: String) {
         if (!canNotify(ctx)) return

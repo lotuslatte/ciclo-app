@@ -68,4 +68,44 @@ data class AppData(
 
     fun withLog(d: LocalDate, log: DayLog): AppData =
         copy(logs = if (log.isEmpty) logs - d.toString() else logs + (d.toString() to log))
+
+    /**
+     * The same data with every value forced into the range the UI can show, or null when a date
+     * cannot be read. Files can be damaged, edited by hand or written by another version; nothing
+     * read from one may crash the app later.
+     */
+    fun sanitizedOrNull(): AppData? {
+        fun date(s: String): LocalDate? = runCatching { LocalDate.parse(s) }.getOrNull()
+        val cleanPeriods = periods.map { p ->
+            val start = date(p.start) ?: return null
+            val end = p.end?.let { date(it) ?: return null }
+            if (end != null && end.isBefore(start)) p.copy(end = p.start) else p
+        }
+        if (logs.keys.any { date(it) == null }) return null
+        return copy(
+            periods = cleanPeriods,
+            logs = logs.mapValues { (_, l) ->
+                l.copy(
+                    flow = l.flow.coerceIn(Limits.FLOW),
+                    mood = l.mood?.coerceIn(Limits.MOOD),
+                    pain = l.pain?.coerceIn(Limits.PAIN),
+                )
+            },
+            settings = settings.copy(
+                defaultCycle = settings.defaultCycle.coerceIn(Limits.CYCLE),
+                defaultPeriod = settings.defaultPeriod.coerceIn(Limits.PERIOD),
+                remindDaysBefore = settings.remindDaysBefore.coerceIn(Limits.REMIND_DAYS),
+            ),
+        )
+    }
+}
+
+/** Valid ranges for stored values. */
+object Limits {
+    val CYCLE = 21..45
+    val PERIOD = 2..10
+    val FLOW = 0..3
+    val MOOD = 0..4
+    val PAIN = 0..10
+    val REMIND_DAYS = 1..3
 }

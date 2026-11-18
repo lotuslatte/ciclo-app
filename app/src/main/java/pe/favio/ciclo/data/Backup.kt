@@ -2,6 +2,8 @@ package pe.favio.ciclo.data
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.time.LocalDate
 
 /** Export file. Never contains the PIN. */
@@ -38,6 +40,25 @@ object BackupCodec {
         ),
     )
 
+    /** Far above any real backup (ten years of daily notes stay under 2 MB). */
+    const val MAX_BYTES = 8 * 1024 * 1024
+
+    /**
+     * Reads a file the user picked, refusing anything too large to be a backup so that a wrong
+     * pick cannot exhaust memory. Throws [IllegalArgumentException] in that case.
+     */
+    fun readText(input: InputStream, maxBytes: Int = MAX_BYTES): String {
+        val out = ByteArrayOutputStream()
+        val buffer = ByteArray(16 * 1024)
+        while (true) {
+            val n = input.read(buffer)
+            if (n < 0) break
+            out.write(buffer, 0, n)
+            require(out.size() <= maxBytes) { "El archivo es demasiado grande para ser un respaldo de Ciclo" }
+        }
+        return out.toByteArray().decodeToString()
+    }
+
     /** Throws [IllegalArgumentException] when the text is not a valid backup. */
     fun decode(text: String): Backup {
         val b = try {
@@ -55,10 +76,16 @@ object BackupCodec {
         return b
     }
 
-    /** Replaces records and cycle defaults; keeps this phone's reminders and PIN. */
-    fun restore(current: AppData, b: Backup): AppData = current.copy(
-        periods = b.periods,
-        logs = b.logs,
-        settings = current.settings.copy(defaultCycle = b.defaultCycle, defaultPeriod = b.defaultPeriod),
-    )
+    /**
+     * Replaces records and cycle defaults; keeps this phone's reminders and PIN. Out-of-range
+     * values in the file are brought into range.
+     */
+    fun restore(current: AppData, b: Backup): AppData {
+        val restored = current.copy(
+            periods = b.periods,
+            logs = b.logs,
+            settings = current.settings.copy(defaultCycle = b.defaultCycle, defaultPeriod = b.defaultPeriod),
+        )
+        return restored.sanitizedOrNull() ?: current
+    }
 }

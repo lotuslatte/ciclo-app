@@ -53,12 +53,34 @@ class Store internal constructor(
     fun restoreCopy(date: LocalDate): Boolean {
         val f = copyFiles().firstOrNull { it.first == date }?.second ?: return false
         val restored = parse(f) ?: return false
-        update { restored }
+        // The copy holds the PIN of that day; the lock stays as it is now, or an old PIN could lock the user out.
+        update { now ->
+            restored.copy(
+                settings = restored.settings.copy(
+                    pinHash = now.settings.pinHash,
+                    pinSalt = now.settings.pinSalt,
+                    onboarded = now.settings.onboarded,
+                ),
+            )
+        }
         return true
     }
 
+    /**
+     * Deletes everything this class keeps on disk: the data file, the automatic copies and any
+     * damaged file that was set aside. Unlike [update], it leaves no copy of the previous state.
+     */
+    @Synchronized
+    fun wipe() {
+        copies.listFiles()?.forEach { it.delete() }
+        copies.delete()
+        dir.listFiles()?.filter { it.isFile && it.name.startsWith(FILE) }?.forEach { it.delete() }
+        loadProblem = null
+        state.value = AppData()
+    }
+
     private fun parse(f: File): AppData? = try {
-        json.decodeFromString(AppData.serializer(), f.readText())
+        json.decodeFromString(AppData.serializer(), f.readText()).sanitizedOrNull()
     } catch (e: Exception) {
         null
     }

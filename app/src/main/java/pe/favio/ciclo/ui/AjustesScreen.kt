@@ -66,6 +66,7 @@ import pe.favio.ciclo.data.BackupCodec
 import pe.favio.ciclo.data.Settings
 import pe.favio.ciclo.domain.Prediction
 import pe.favio.ciclo.notify.Reminders
+import pe.favio.ciclo.report.DoctorReport
 import pe.favio.ciclo.security.Pin
 import pe.favio.ciclo.ui.theme.C
 import java.time.LocalDate
@@ -117,7 +118,7 @@ fun AjustesScreen(
     val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         runCatching {
-            val text = ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() }
+            val text = ctx.contentResolver.openInputStream(uri)!!.use { BackupCodec.readText(it) }
             BackupCodec.decode(text)
         }.onSuccess { pendingImport = it }
             .onFailure { Toast.makeText(ctx, it.message ?: "Archivo no válido", Toast.LENGTH_LONG).show() }
@@ -346,8 +347,18 @@ fun AjustesScreen(
             onDismissRequest = { confirmWipe = false },
             containerColor = C.Surface,
             title = { Text("¿Borrar todo?") },
-            text = { Text("Se borrarán todas tus reglas, anotaciones y ajustes de este teléfono. Si no tienes un respaldo, no se podrán recuperar.") },
-            confirmButton = { TextButton({ onWipe(); confirmWipe = false }) { Text("Borrar", color = C.RedText) } },
+            text = { Text("Se borrarán de este teléfono todas tus reglas, anotaciones y ajustes, junto con las copias automáticas. Si no exportaste un respaldo, no se podrán recuperar.") },
+            confirmButton = {
+                TextButton({
+                    onWipe()
+                    // Everything else the app keeps about the user goes too.
+                    BetaSupport.clearCrashLog(ctx)
+                    crashLog = null
+                    DoctorReport.clearCache(ctx)
+                    Reminders.forget(ctx)
+                    confirmWipe = false
+                }) { Text("Borrar", color = C.RedText) }
+            },
             dismissButton = { TextButton({ confirmWipe = false }) { Text("Cancelar", color = C.Muted) } },
         )
     }

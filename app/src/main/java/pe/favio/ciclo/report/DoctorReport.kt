@@ -107,6 +107,11 @@ object DoctorReport {
         return file
     }
 
+    /** Removes the PDFs left in the cache by earlier reports. */
+    fun clearCache(ctx: Context) {
+        File(ctx.cacheDir, "reports").listFiles()?.forEach { it.delete() }
+    }
+
     fun uri(ctx: Context, file: File) = FileProvider.getUriForFile(ctx, "${ctx.packageName}.files", file)
 
     fun viewIntent(ctx: Context, file: File): Intent {
