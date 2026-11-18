@@ -6,3 +6,7 @@ Offline menstrual-cycle tracker for Android (Kotlin + Jetpack Compose). No netwo
 - Signing key: kept outside the repo (`~/.keys/ciclo/`), loaded in CI from the `KEYSTORE_B64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` secrets. Losing it means future APKs can't update an installed copy.
 - Predictions: `app/src/main/java/pe/favio/ciclo/domain/Cycle.kt` (tests in `app/src/test`).
 - Health content and citations: `app/src/main/java/pe/favio/ciclo/content/PhaseContent.kt`.
+
+## License
+
+GPL-3.0-or-later. See `LICENSE`.
