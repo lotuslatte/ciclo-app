@@ -96,7 +96,8 @@ fun AjustesScreen(
     var crashLog by remember { mutableStateOf(BetaSupport.crashLog(ctx)) }
     fun launch(intent: android.content.Intent) {
         LockGuard.skipNext()
-        runCatching { ctx.startActivity(intent) }
+        // Nothing opened: take the pass back, or the next time the app is left it would not lock.
+        runCatching { ctx.startActivity(intent) }.onFailure { LockGuard.consume() }
     }
 
     val notifPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -236,7 +237,7 @@ fun AjustesScreen(
         Group {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Guarda un archivo con tus datos para no perderlos si cambias de teléfono. El archivo no incluye tu PIN.",
+                    "Guarda un archivo con tus datos para no perderlos si cambias de teléfono. El archivo no incluye tu PIN y no está cifrado: quien lo abra puede leerlo, así que guárdalo en un lugar privado.",
                     color = C.Soft, fontSize = 14.sp, lineHeight = 20.sp,
                 )
                 Text(

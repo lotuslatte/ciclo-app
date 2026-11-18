@@ -21,6 +21,13 @@ object LockGuard {
     @Volatile
     private var skip = false
 
+    /**
+     * True while the PIN has been entered and the app has not been left since. Kept in memory
+     * only: it survives a rotation, and a new process always starts locked.
+     */
+    @Volatile
+    var unlocked = false
+
     fun skipNext() {
         skip = true
     }
@@ -35,7 +42,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val store = Store.get(this)
-        locked = store.data.value.settings.pinEnabled
+        val pinSet = store.data.value.settings.pinEnabled
+        locked = pinSet && !LockGuard.unlocked
+        if (!locked) LockGuard.unlocked = true
+        // Set before the first frame so the recents screen never captures cycle data.
+        if (pinSet) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
         setContent {
             CicloTheme {
@@ -47,7 +58,10 @@ class MainActivity : ComponentActivity() {
                     else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 }
                 if (locked && pinOn) {
-                    LockScreen(check = { Pin.verify(data.settings, it) }, onUnlock = { locked = false })
+                    LockScreen(
+                        check = { Pin.verify(data.settings, it) },
+                        onUnlock = { locked = false; LockGuard.unlocked = true },
+                    )
                 } else {
                     CicloRoot(store, data)
                 }
@@ -58,6 +72,7 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         if (LockGuard.consume() || isChangingConfigurations) return
+        LockGuard.unlocked = false
         if (Store.get(this).data.value.settings.pinEnabled) locked = true
     }
 }
