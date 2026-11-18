@@ -39,8 +39,13 @@ class CyclePredictorTest {
         val info = p.info(d("2026-03-12"))
         assertEquals(d("2026-03-12"), info.ovulation)
         assertEquals(DayKind.OVULATION, info.kind)
-        assertEquals(Span(d("2026-03-07"), d("2026-03-13")), info.fertile)
+        // Six days that end on the estimated ovulation day (Wilcox et al. 1995), none after it.
+        assertEquals(Span(d("2026-03-07"), d("2026-03-12")), info.fertile)
+        assertEquals(6, info.fertile!!.days)
+        assertEquals(DayKind.NONE, p.info(d("2026-03-06")).kind)
         assertEquals(DayKind.FERTILE, p.info(d("2026-03-07")).kind)
+        assertEquals(DayKind.FERTILE, p.info(d("2026-03-11")).kind)
+        assertEquals(DayKind.NONE, p.info(d("2026-03-13")).kind)
         assertEquals(DayKind.NONE, p.info(d("2026-03-14")).kind)
     }
 
@@ -225,5 +230,21 @@ class CyclePredictorTest {
         assertEquals(a.nextStart, b.nextStart)
         assertEquals(a.stats, b.stats)
         assertEquals(a.info(today), b.info(today))
+    }
+
+    /** Periods whose starts are [lengths] days apart, beginning 1 Jan 2026. */
+    private fun withCycles(vararg lengths: Long): List<Bleed> =
+        lengths.runningFold(d("2026-01-01")) { start, len -> start.plusDays(len) }.map { Bleed(it, it.plusDays(4)) }
+
+    @Test
+    fun irregular_onlyAboveNineDaysBetweenShortestAndLongest() {
+        // FIGO: up to 9 days is normal at 18-25 and 42-45 (7 at 26-41); the app does not know the age.
+        val nine = CyclePredictor.predict(withCycles(26, 30, 35), 28, 5, d("2026-04-10"))
+        assertEquals(3, nine.stats.cyclesUsed)
+        assertFalse(nine.stats.irregular)
+        val ten = CyclePredictor.predict(withCycles(26, 30, 36), 28, 5, d("2026-04-10"))
+        assertTrue(ten.stats.irregular)
+        // Two cycles are too few to call a pattern.
+        assertFalse(CyclePredictor.predict(withCycles(24, 38), 28, 5, d("2026-03-10")).stats.irregular)
     }
 }

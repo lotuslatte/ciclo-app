@@ -5,8 +5,16 @@ import pe.favio.ciclo.domain.Phase
 // Every claim below was checked against its primary source (Sept 2026). Keep the wording as cautious as the evidence.
 // Nov 2026 review: removed an ACOG reaffirmation year that could not be confirmed, stopped attributing a
 // "12 to 14 days" luteal figure to Wilcox 2000 (the paper is about how variable the timing is), and added
-// cautions to the anti-inflammatory and calcium tips. Still open: the fertile window (ovulation -5 to +1)
-// has no source, and the 9-day irregularity threshold ignores FIGO's 7 days for ages 26 to 41.
+// cautions to the anti-inflammatory and calcium tips.
+// Second Nov 2026 review:
+// - Fertile window: now the six days ending on the estimated ovulation day (Wilcox, Weinberg and Baird 1995,
+//   abstract read; restated in Wilcox, Dunson and Baird 2000, full text read). It used to run one day longer.
+// - Irregularity: FIGO's limit is 9 days at 18-25 and 42-45 and 7 days at 26-41 (read in Jain, Munro and
+//   Critchley 2023 and Munro et al. 2022, both open access; the 2018 paper itself is paywalled). The app does
+//   not know the age, so it flags above 9 and the text gives the 7-day limit for ages 26-41.
+// - Follicular phase: the "more energy and better mood" sentence had no source and the one prospective daily
+//   study opened (Doornweerd and Gerritsen 2025, 22 naturally cycling women) found no significant phase
+//   difference in energy or happiness, so the sentence was removed.
 
 data class Tip(val title: String, val body: String, val source: String)
 
@@ -70,8 +78,13 @@ object PhaseContent {
             tips = listOf(
                 Tip(
                     "Es una estimación",
-                    "El día de la ovulación cambia de una persona a otra y de un ciclo a otro, incluso en ciclos regulares. La app lo calcula contando 14 días hacia atrás desde la próxima regla prevista, así que sus fechas son aproximadas.",
+                    "El día de la ovulación cambia de una persona a otra y de un ciclo a otro, incluso en ciclos regulares. La app lo calcula contando 14 días hacia atrás desde la próxima regla prevista, así que sus fechas son aproximadas. En un estudio, solo cerca del 30 % de las mujeres tuvo todos sus días fértiles entre los días 10 y 17 del ciclo.",
                     "Wilcox et al., 2000 · BMJ",
+                ),
+                Tip(
+                    "Cuáles son los días fértiles",
+                    "En un estudio con 221 mujeres que buscaban un embarazo, casi todos los embarazos se debieron a relaciones en un periodo de seis días que termina el día de la ovulación. La app marca esos seis días a partir de una ovulación que solo estima, así que en tu ciclo real pueden caer varios días antes o después.",
+                    "Wilcox et al., 1995 · N Engl J Med",
                 ),
                 Tip(
                     "No es un anticonceptivo",
@@ -109,7 +122,7 @@ object PhaseContent {
 
     val redFlags: List<String> = listOf(
         "Tus ciclos duran menos de 24 días o más de 38.",
-        "La duración de tus ciclos cambia más de 7 a 9 días de un mes a otro.",
+        "Entre tu ciclo más corto y tu ciclo más largo hay más de 9 días de diferencia (más de 7 si tienes entre 26 y 41 años).",
         "Pasan más de 90 días sin regla y no estás embarazada.",
         "La regla dura más de 8 días.",
         "Empapas una toalla o tampón cada 1 o 2 horas, o el sangrado afecta tu vida diaria.",

@@ -24,7 +24,8 @@ object Insights {
     const val FIGO_MIN_CYCLE = 24
     const val FIGO_MAX_CYCLE = 38
     const val FIGO_MAX_PERIOD = 8
-    const val FIGO_MAX_SPREAD = 9
+    /** Same rule and reasoning as [CyclePredictor.IRREGULAR_SPREAD]. */
+    const val FIGO_MAX_SPREAD = CyclePredictor.IRREGULAR_SPREAD
     private const val RECENT = 6
 
     fun history(bleeds: List<Bleed>, entries: Map<LocalDate, DayEntry>, today: LocalDate): List<CycleRecord> {

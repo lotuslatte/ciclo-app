@@ -109,4 +109,15 @@ class InsightsTest {
         assertTrue(p.nextStart!! in r)
         assertEquals(DayKind.PERIOD, p.info(d("2026-01-14")).kind) // still painted
     }
+
+    @Test
+    fun figo_variableFlag_onlyAboveNineDaysBetweenShortestAndLongest() {
+        fun flags(vararg lengths: Long): List<CycleFlag> {
+            val bleeds = lengths.runningFold(d("2026-01-01")) { start, len -> start.plusDays(len) }.map { Bleed(it, it.plusDays(4)) }
+            return Insights.figoFlags(Insights.history(bleeds, emptyMap(), today), isOpen = false, today = today)
+        }
+        assertTrue(CycleFlag.VARIABLE !in flags(26, 30, 35)) // 9 days: within the limit
+        assertTrue(CycleFlag.VARIABLE in flags(26, 30, 36)) // 10 days
+        assertEquals(CyclePredictor.IRREGULAR_SPREAD, Insights.FIGO_MAX_SPREAD)
+    }
 }

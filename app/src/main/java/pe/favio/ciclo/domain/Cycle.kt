@@ -54,7 +54,18 @@ object CyclePredictor {
     const val LUTEAL_DAYS = 14L
     const val MIN_CYCLE = 21
     const val MAX_CYCLE = 45
-    /** Shortest-to-longest spread above this counts as irregular (FIGO normal variation ≤ 7–9 days). */
+    /**
+     * Fertile days counted before the estimated ovulation day. With that day they make the six-day
+     * window in which nearly all conceptions happened in Wilcox, Weinberg and Baird (N Engl J Med
+     * 1995;333:1517-21); there were none from intercourse after ovulation day.
+     */
+    const val FERTILE_DAYS_BEFORE = 5L
+    /**
+     * A difference between the shortest and the longest recent cycle above this counts as irregular.
+     * FIGO System 1 (2018) sets the normal limit by age: up to 9 days at 18-25 and 42-45, up to 7 days
+     * at 26-41. The app does not know the age, so it uses 9: above it a cycle is irregular at every
+     * age FIGO defines. The texts tell users aged 26-41 that their limit is 7.
+     */
     const val IRREGULAR_SPREAD = 9
     /** Gaps between starts outside this range are almost always a missed or duplicated entry, not a real cycle. */
     val PLAUSIBLE_CYCLE = 15..60
@@ -194,7 +205,7 @@ class Prediction internal constructor(
         }
 
         val ovulation = next.minusDays(CyclePredictor.LUTEAL_DAYS)
-        val fertile = Span(ovulation.minusDays(5), ovulation.plusDays(1))
+        val fertile = Span(ovulation.minusDays(CyclePredictor.FERTILE_DAYS_BEFORE), ovulation)
         val ovDay = daysBetween(s, ovulation) + 1
 
         val logged = actual.firstOrNull { it.start == s }
