@@ -169,6 +169,12 @@ fun HoyScreen(
             }
 
             SecondaryButton("Ver mis patrones e informe", onOpenStats)
+
+            // The first place where estimated dates are shown, so the limits are stated here too.
+            Text(
+                "Ciclo no es un dispositivo médico. Las fechas son estimaciones: no reemplazan una consulta y no sirven como método anticonceptivo.",
+                color = C.Muted, fontSize = 12.sp, lineHeight = 18.sp,
+            )
         }
     }
 
