@@ -3,6 +3,10 @@ package pe.favio.ciclo.content
 import pe.favio.ciclo.domain.Phase
 
 // Every claim below was checked against its primary source (Sept 2026). Keep the wording as cautious as the evidence.
+// Nov 2026 review: removed an ACOG reaffirmation year that could not be confirmed, stopped attributing a
+// "12 to 14 days" luteal figure to Wilcox 2000 (the paper is about how variable the timing is), and added
+// cautions to the anti-inflammatory and calcium tips. Still open: the fertile window (ovulation -5 to +1)
+// has no source, and the 9-day irregularity threshold ignores FIGO's 7 days for ages 26 to 41.
 
 data class Tip(val title: String, val body: String, val source: String)
 
@@ -30,7 +34,7 @@ object PhaseContent {
                 ),
                 Tip(
                     "Antiinflamatorios al empezar el dolor",
-                    "Ibuprofeno o naproxeno alivian los cólicos mejor que un placebo, aunque pueden causar molestias de estómago. Evítalos si tienes úlcera, asma por aspirina o estás embarazada.",
+                    "Ibuprofeno o naproxeno alivian los cólicos mejor que un placebo, aunque pueden causar molestias de estómago. Evítalos si tienes úlcera, asma por aspirina o estás embarazada. Consulta antes con un profesional si tomas otros medicamentos, tienes enfermedad renal, usas anticoagulantes o eres alérgica a estos medicamentos.",
                     "Marjoribanks et al., 2015 · Cochrane",
                 ),
                 Tip(
@@ -66,7 +70,7 @@ object PhaseContent {
             tips = listOf(
                 Tip(
                     "Es una estimación",
-                    "La ovulación suele ocurrir entre 12 y 14 días antes de la siguiente regla, pero varía de un ciclo a otro, incluso en ciclos regulares. Las fechas de la app son aproximadas.",
+                    "El día de la ovulación cambia de una persona a otra y de un ciclo a otro, incluso en ciclos regulares. La app lo calcula contando 14 días hacia atrás desde la próxima regla prevista, así que sus fechas son aproximadas.",
                     "Wilcox et al., 2000 · BMJ",
                 ),
                 Tip(
@@ -84,7 +88,7 @@ object PhaseContent {
             tips = listOf(
                 Tip(
                     "Calcio",
-                    "En un ensayo con 466 mujeres, 1200 mg diarios de calcio redujeron los síntomas premenstruales un 48 %, frente a un 30 % con placebo, al tercer ciclo.",
+                    "En un ensayo con 466 mujeres, 1200 mg diarios de calcio redujeron los síntomas premenstruales un 48 %, frente a un 30 % con placebo, al tercer ciclo. Es un solo estudio. Antes de tomar un suplemento, coméntalo con un profesional de salud.",
                     "Thys-Jacobs et al., 1998 · Am J Obstet Gynecol",
                 ),
                 Tip(
@@ -118,6 +122,6 @@ object PhaseContent {
     val redFlagSources = listOf(
         "Munro et al., 2018 · FIGO, Int J Gynecol Obstet",
         "NICE NG88, 2018 (actualizada 2026)",
-        "ACOG, Opinión del Comité 651, 2015 (reafirmada 2025)",
+        "ACOG, Opinión del Comité 651, 2015",
     )
 }
