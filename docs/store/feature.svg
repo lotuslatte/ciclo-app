@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+<rect width="1024" height="500" fill="#1C1320"/>
+<g transform="translate(40,70) scale(3.35)"><path stroke="#4B3B7A" stroke-width="7" fill="none" d="M54,32a22,22 0,1 1,0 44a22,22 0,1 1,0 -44z"/><path stroke="#C8374F" stroke-width="7" fill="none" stroke-linecap="round" d="M54,32a22,22 0,0 1,19.05 11"/><path stroke="#D98FB6" stroke-width="7" fill="none" stroke-linecap="round" d="M73.05,43a22,22 0,0 1,2.95 11"/><path fill="#8B6FE0" d="M54,49a5,5 0,1 1,0 10a5,5 0,1 1,0 -10z"/></g>
+<text x="440" y="215" font-family="Noto Sans, DejaVu Sans, sans-serif" font-size="92" font-weight="700" fill="#F3EAF3">Ciclo</text>
+<text x="442" y="282" font-family="Noto Sans, DejaVu Sans, sans-serif" font-size="34" fill="#F3EAF3">Tu ciclo, solo en tu teléfono</text>
+<text x="442" y="336" font-family="Noto Sans, DejaVu Sans, sans-serif" font-size="25" fill="#B9A8BD">Sin internet · sin cuenta · sin anuncios</text>
+</svg>
