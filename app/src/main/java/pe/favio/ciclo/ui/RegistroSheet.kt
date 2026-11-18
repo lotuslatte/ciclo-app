@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -84,20 +85,22 @@ fun RegistroSheet(
     onSave: (log: DayLog, markPeriod: Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var flow by remember { mutableIntStateOf(initial.flow) }
-    var symptoms by remember { mutableStateOf(initial.symptoms.toSet()) }
-    var mood by remember { mutableStateOf(initial.mood) }
-    var note by remember { mutableStateOf(initial.note) }
-    var pain by remember { mutableStateOf(initial.pain) }
-    var limited by remember { mutableStateOf(initial.limited) }
-    var markPeriod by remember { mutableStateOf(true) }
+    // Saveable so a rotation (or the system reclaiming the app) does not discard what was typed.
+    var flow by rememberSaveable { mutableIntStateOf(initial.flow) }
+    var symptomList by rememberSaveable { mutableStateOf(ArrayList(initial.symptoms)) }
+    val symptoms = symptomList.toSet()
+    var mood by rememberSaveable { mutableStateOf(initial.mood) }
+    var note by rememberSaveable { mutableStateOf(initial.note) }
+    var pain by rememberSaveable { mutableStateOf(initial.pain) }
+    var limited by rememberSaveable { mutableStateOf(initial.limited) }
+    var markPeriod by rememberSaveable { mutableStateOf(true) }
     var saved by remember { mutableStateOf(false) }
 
     // Every way of closing the sheet saves, so nothing typed is lost.
     fun saveAndClose() {
         if (!saved) {
             saved = true
-            val log = DayLog(flow, SYMPTOMS.filter { it in symptoms }, mood, note.trim(), pain, limited)
+            val log = DayLog(flow, SYMPTOMS.filter { it in symptomList }, mood, note.trim(), pain, limited)
             if (log != initial || (markAction != null && flow > 0 && markPeriod)) {
                 onSave(log, markAction != null && flow > 0 && markPeriod)
             }
@@ -180,7 +183,7 @@ fun RegistroSheet(
                     SYMPTOMS.forEach { s ->
                         val on = s in symptoms
                         Choice(
-                            on, { symptoms = if (on) symptoms - s else symptoms + s },
+                            on, { symptomList = ArrayList(if (on) symptomList - s else symptomList + s) },
                             Modifier.heightIn(min = 42.dp),
                             selectedBg = C.RedTint, selectedBorder = C.Red, selectedFg = C.RedLight,
                         ) {

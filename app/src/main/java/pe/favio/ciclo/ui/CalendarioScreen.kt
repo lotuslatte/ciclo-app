@@ -336,7 +336,13 @@ private fun StatsRow(p: Prediction) {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Stat("Ciclo promedio", Fmt.days(p.stats.cycleLength), C.Text, Modifier.weight(1f))
         Stat("Regla promedio", Fmt.days(p.stats.periodLength), C.Text, Modifier.weight(1f))
-        Stat("Próxima regla", p.nextStart?.let { Fmt.short(it) } ?: "—", C.RedText, Modifier.weight(1f))
+        // A date already in the past is not a "next period": say it is late, or say nothing once lapsed.
+        val next = when {
+            p.lapsed -> "—"
+            p.lateDays > 0 -> "Retraso"
+            else -> p.nextStart?.let { Fmt.short(it) } ?: "—"
+        }
+        Stat("Próxima regla", next, C.RedText, Modifier.weight(1f))
     }
 }
 

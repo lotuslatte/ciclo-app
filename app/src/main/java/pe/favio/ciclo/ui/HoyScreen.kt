@@ -74,8 +74,8 @@ fun HoyScreen(
     var picking by remember { mutableStateOf(false) }
     val info = p.info(today)
     val options = PeriodOps.optionsFor(data.bleeds, today, today)
-    // Picking another day applies whatever that day's main action is (start, extend or move start).
-    val onPick: (LocalDate) -> Unit = { d -> PeriodOps.optionsFor(data.bleeds, d, today).primary?.let { onAction(it, d) } }
+    // Picking another day makes it a first day (start, extend or move start); it never ends a period.
+    val onPick: (LocalDate) -> Unit = { d -> PeriodOps.startActionFor(data.bleeds, d, today)?.let { onAction(it, d) } }
 
     Column(
         Modifier
@@ -142,6 +142,11 @@ fun HoyScreen(
                     "Por ahora las fechas usan un ciclo de ${Fmt.days(p.stats.cycleLength)}. Con 2 reglas registradas empezarán a basarse en las tuyas.",
                     color = C.Muted, fontSize = 13.sp, lineHeight = 19.sp,
                 )
+            } else if (p.stats.irregular && !p.lapsed) {
+                Text(
+                    "Tus ciclos varían bastante de uno a otro, así que toma las fechas como aproximadas.",
+                    color = C.Muted, fontSize = 13.sp, lineHeight = 19.sp,
+                )
             }
 
             if (flags.isNotEmpty()) {
@@ -179,16 +184,21 @@ private fun StatusBlock(p: Prediction, today: LocalDate, inPeriod: Boolean) {
             val start = p.periodAt(today)!!.start
             Triple("Estás en el", "día ${java.time.temporal.ChronoUnit.DAYS.between(start, today) + 1} de tu regla", if (p.isOpen) "Cuando termine, toca «Terminó mi regla»." else "")
         }
+        p.lapsed -> Triple(
+            "Tu última regla registrada empezó",
+            "hace ${Fmt.days(java.time.temporal.ChronoUnit.DAYS.between(p.lastStart ?: next, today).toInt())}",
+            "Pasó demasiado tiempo para estimar la siguiente. Si te llegó y no la marcaste, toca «Me llegó otro día». Si no te ha llegado y pudieras estar embarazada, considera hacerte una prueba.",
+        )
         p.lateDays > 0 -> Triple(
             "Tu regla lleva", "${Fmt.days(p.lateDays)} de retraso",
             "Los ciclos varían. Si pudieras estar embarazada, considera hacerte una prueba.",
         )
         until == 0 -> Triple("Tu regla podría llegar", "hoy", "${Fmt.full(next)} · estimado")
         p.nextRange != null -> Triple(
-            "Tu regla llega en", Fmt.days(until),
+            "Tu regla llegaría en", Fmt.days(until),
             "probablemente entre el ${Fmt.dayMonth(p.nextRange!!.start)} y el ${Fmt.dayMonth(p.nextRange!!.end)}",
         )
-        else -> Triple("Tu regla llega en", Fmt.days(until), "${Fmt.full(next)} · estimado")
+        else -> Triple("Tu regla llegaría en", Fmt.days(until), "${Fmt.full(next)} · estimado")
     }
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(lead, color = C.Muted, fontSize = 15.sp)

@@ -3,6 +3,7 @@ package pe.favio.ciclo.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -34,6 +35,8 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,14 +86,21 @@ fun OnboardingScreen(
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
 
-    var unknownCycle by remember { mutableStateOf(false) }
-    var cycle by remember { mutableStateOf(initial.defaultCycle) }
-    var period by remember { mutableStateOf(initial.defaultPeriod) }
-    var reminders by remember { mutableStateOf(initial.remindPeriod) }
-    var lastStart by remember { mutableStateOf<LocalDate?>(null) }
+    // Saveable: the pager keeps its page across a rotation, so the answers must survive it too
+    // (losing "accepted" on a later page would leave the guide stuck with a disabled button).
+    var unknownCycle by rememberSaveable { mutableStateOf(false) }
+    var cycle by rememberSaveable { mutableStateOf(initial.defaultCycle) }
+    var period by rememberSaveable { mutableStateOf(initial.defaultPeriod) }
+    var reminders by rememberSaveable { mutableStateOf(initial.remindPeriod) }
+    var lastStartKey by rememberSaveable { mutableStateOf<String?>(null) }
+    val lastStart = lastStartKey?.let(LocalDate::parse)
     var picking by remember { mutableStateOf(false) }
     // Beta consent: required once; replaying the guide later starts accepted.
-    var accepted by remember { mutableStateOf(initial.onboarded) }
+    var accepted by rememberSaveable { mutableStateOf(initial.onboarded) }
+
+    BackHandler(enabled = pager.currentPage > 0) {
+        scope.launch { pager.animateScrollToPage(pager.currentPage - 1) }
+    }
 
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     fun askPermission() {
@@ -144,7 +155,7 @@ fun OnboardingScreen(
                         cycle = cycle, onCycle = { cycle = it },
                         period = period, onPeriod = { period = it },
                         reminders = reminders, onReminders = { reminders = it; if (it) askPermission() },
-                        lastStart = lastStart, onLastStart = { lastStart = it },
+                        lastStart = lastStart, onLastStart = { lastStartKey = it?.toString() },
                         onPickDate = { picking = true },
                     )
                 }
@@ -174,12 +185,12 @@ fun OnboardingScreen(
         }
     }
 
-    if (picking) PastDatePicker(today, onPick = { lastStart = it }, onDismiss = { picking = false })
+    if (picking) PastDatePicker(today, onPick = { lastStartKey = it.toString() }, onDismiss = { picking = false })
 }
 
 @Composable
 private fun PageTitle(text: String) {
-    Text(text, fontFamily = Fraunces, fontWeight = FontWeight.SemiBold, fontSize = 30.sp, lineHeight = 36.sp)
+    Text(text, Modifier.semantics { heading() }, fontFamily = Fraunces, fontWeight = FontWeight.SemiBold, fontSize = 30.sp, lineHeight = 36.sp)
 }
 
 @Composable

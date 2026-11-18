@@ -1,5 +1,6 @@
 package pe.favio.ciclo.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
@@ -16,6 +17,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,6 +67,13 @@ class Actions(private val store: Store) {
         return changed
     }
 
+    /**
+     * Stores a period that was left open for weeks as ended at the usual length, so the calendar,
+     * the day options and the predictions all read the same thing.
+     */
+    fun settle(today: LocalDate) =
+        store.update { it.withBleeds(PeriodOps.normalize(it.bleeds, today, avgLen(it))) }
+
     fun undo() {
         val previous = undoPeriods ?: return
         store.update { it.copy(periods = previous) }
@@ -104,6 +113,7 @@ fun CicloRoot(store: Store, data: AppData) {
         CyclePredictor.predict(data.bleeds, data.settings.defaultCycle, data.settings.defaultPeriod, today)
     }
     val actions = remember(store) { Actions(store) }
+    LaunchedEffect(today) { actions.settle(today) }
 
     var tab by rememberSaveable { mutableStateOf(Tab.HOY) }
     var logDate by rememberSaveable { mutableStateOf<String?>(null) }
@@ -122,7 +132,8 @@ fun CicloRoot(store: Store, data: AppData) {
         if (!actions.period(action, date, today)) return
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
-            val r = snackbar.showSnackbar(action.doneMessage(), actionLabel = "Deshacer", duration = SnackbarDuration.Short)
+            // Long (10 s): enough to react after deleting a period, also with a screen reader.
+            val r = snackbar.showSnackbar(action.doneMessage(), actionLabel = "Deshacer", duration = SnackbarDuration.Long)
             if (r == SnackbarResult.ActionPerformed) actions.undo()
         }
     }
@@ -148,6 +159,9 @@ fun CicloRoot(store: Store, data: AppData) {
         }
         return
     }
+
+    // Back from any other tab returns to "Hoy" before leaving the app.
+    BackHandler(enabled = tab != Tab.HOY && !showStats) { tab = Tab.HOY }
 
     Scaffold(
         containerColor = C.Bg,
