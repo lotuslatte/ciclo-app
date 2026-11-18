@@ -10,3 +10,8 @@ Offline menstrual-cycle tracker for Android (Kotlin + Jetpack Compose). No netwo
 ## License
 
 GPL-3.0-or-later. See `LICENSE`.
+
+## Distribution
+
+- Store texts live in `fastlane/metadata/android/` (the layout F-Droid, IzzyOnDroid and fastlane read) and in `docs/store/listing_es.md` with the answers for the Play Console forms.
+- `docs/` is the public page and the privacy policy for GitHub Pages. The policy page is generated from the in-app text: `python3 scripts/privacy_page.py`.
