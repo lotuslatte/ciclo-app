@@ -8,6 +8,12 @@ plugins {
 // Signing comes from env vars in CI; without them release falls back to the debug key.
 val keystorePath: String? = System.getenv("KEYSTORE_PATH")
 
+// versionCode = this offset + the GitHub Actions run number. Google Play rejects a versionCode that is
+// not higher than the last one uploaded, and the run number restarts at 1 if the workflow file is ever
+// renamed or recreated. Run numbers were below 100 when the offset was added; if the counter restarts,
+// raise the offset above the last published versionCode. Never lower it.
+val versionCodeOffset = 1000
+
 android {
     namespace = "pe.favio.ciclo"
     compileSdk = 36
@@ -16,7 +22,7 @@ android {
         applicationId = "pe.favio.ciclo"
         minSdk = 26
         targetSdk = 36
-        versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
+        versionCode = versionCodeOffset + (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
         versionName = System.getenv("VERSION_NAME") ?: "1.0"
     }
 
