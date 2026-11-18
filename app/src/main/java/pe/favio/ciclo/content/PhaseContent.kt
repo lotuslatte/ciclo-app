@@ -60,8 +60,8 @@ object PhaseContent {
         PhaseInfo(
             phase = Phase.FOLICULAR,
             name = "Folicular",
-            short = "El estrógeno sube y muchas personas notan más energía. Entrena como te sientas.",
-            what = "El estrógeno sube y el útero reconstruye su revestimiento. Muchas personas notan más energía y mejor ánimo.",
+            short = "El estrógeno sube y el útero reconstruye su revestimiento. Entrena como te sientas.",
+            what = "El estrógeno sube y el útero reconstruye su revestimiento. Cómo te sientes en estos días cambia de una persona a otra.",
             tips = listOf(
                 Tip(
                     "Entrena como te sientas",
@@ -134,6 +134,7 @@ object PhaseContent {
 
     val redFlagSources = listOf(
         "Munro et al., 2018 · FIGO, Int J Gynecol Obstet",
+        "Jain, Munro y Critchley, 2023 · FIGO, Int J Gynecol Obstet",
         "NICE NG88, 2018 (actualizada 2026)",
         "ACOG, Opinión del Comité 651, 2015",
     )
