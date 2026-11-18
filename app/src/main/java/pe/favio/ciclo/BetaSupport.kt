@@ -41,7 +41,7 @@ object BetaSupport {
     fun feedbackIntent(): Intent = share(
         "Comentarios sobre Ciclo",
         """
-        Comentarios sobre Ciclo (versión de prueba)
+        Comentarios sobre Ciclo
         $deviceLine
 
         1. ¿Qué te gustó?

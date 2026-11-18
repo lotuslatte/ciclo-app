@@ -95,7 +95,7 @@ fun OnboardingScreen(
     var lastStartKey by rememberSaveable { mutableStateOf<String?>(null) }
     val lastStart = lastStartKey?.let(LocalDate::parse)
     var picking by remember { mutableStateOf(false) }
-    // Beta consent: required once; replaying the guide later starts accepted.
+    // Consent: required once; replaying the guide later starts accepted.
     var accepted by rememberSaveable { mutableStateOf(initial.onboarded) }
 
     BackHandler(enabled = pager.currentPage > 0) {
@@ -225,9 +225,9 @@ private fun ColumnScope.WelcomePage(accepted: Boolean, onAccept: (Boolean) -> Un
         Text("La app no usa internet. Puedes guardar un respaldo cuando quieras desde Ajustes.", color = C.OkText, fontSize = 14.sp, lineHeight = 20.sp)
     }
     CCard {
-        Kicker("Versión de prueba", C.RedText)
+        Kicker("Antes de empezar", C.RedText)
         Text(
-            "Podrías encontrar errores. Si algo falla o te confunde, cuéntanos desde Ajustes → Enviar comentarios.",
+            "Si algo falla o te confunde, cuéntanos desde Ajustes, en «Enviar comentarios».",
             color = C.Soft, fontSize = 14.sp, lineHeight = 20.sp,
         )
         Row(
@@ -241,7 +241,7 @@ private fun ColumnScope.WelcomePage(accepted: Boolean, onAccept: (Boolean) -> Un
             Checkbox(accepted, null, colors = CheckboxDefaults.colors(checkedColor = C.Red, uncheckedColor = C.Muted))
             Spacer(Modifier.width(8.dp))
             Text(
-                "Entiendo que es una versión de prueba y que la app no reemplaza la consulta médica.",
+                "Entiendo que Ciclo no es un dispositivo médico y no reemplaza la consulta médica.",
                 fontSize = 14.sp, lineHeight = 20.sp,
             )
         }

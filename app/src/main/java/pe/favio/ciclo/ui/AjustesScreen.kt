@@ -146,11 +146,11 @@ fun AjustesScreen(
             Text("Sin internet. Tus datos se guardan solo en este teléfono.", color = C.OkText, fontSize = 14.sp, lineHeight = 20.sp)
         }
 
-        Section("Versión de prueba")
+        Section("Comentarios")
         Group {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    "Estás usando una versión de prueba. Cuéntanos qué te gusta, qué te confunde o qué falla.",
+                    "Cuéntanos qué te gusta, qué te confunde o qué falla.",
                     color = C.Soft, fontSize = 14.sp, lineHeight = 20.sp,
                 )
                 SecondaryButton("Enviar comentarios", { launch(BetaSupport.feedbackIntent()) }, height = 48.dp)
@@ -273,7 +273,7 @@ fun AjustesScreen(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(C.WarnBg).padding(horizontal = 14.dp, vertical = 12.dp),
             color = C.WarnText, fontSize = 13.sp, lineHeight = 19.sp,
         )
-        Text("Ciclo beta · versión ${BuildConfig.VERSION_NAME}", Modifier.fillMaxWidth(), color = C.Muted, fontSize = 12.sp, textAlign = TextAlign.Center)
+        Text("Ciclo · versión ${BuildConfig.VERSION_NAME}", Modifier.fillMaxWidth(), color = C.Muted, fontSize = 12.sp, textAlign = TextAlign.Center)
         TextButton(
             { launch(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(AUTHOR_URL))) },
             Modifier.fillMaxWidth(),
