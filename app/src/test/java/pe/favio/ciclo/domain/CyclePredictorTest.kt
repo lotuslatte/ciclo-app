@@ -124,4 +124,106 @@ class CyclePredictorTest {
         val p = CyclePredictor.predict(bleeds, 28, 5, d("2026-02-05"))
         assertEquals(CyclePredictor.MIN_CYCLE, p.stats.cycleLength)
     }
+
+    @Test
+    fun firstPeriodStartedToday_usesDefaultsAndASingleDate() {
+        val today = d("2026-03-10")
+        val p = CyclePredictor.predict(listOf(Bleed(today, null)), 28, 5, today)
+        assertTrue(p.hasData)
+        assertTrue(p.isOpen)
+        assertEquals(0, p.stats.cyclesUsed)
+        assertEquals(d("2026-04-07"), p.nextStart)
+        assertNull(p.nextRange)
+        assertEquals(1, p.info(today).cycleDay)
+        assertEquals(DayKind.PREDICTED_PERIOD, p.info(d("2026-03-14")).kind)
+    }
+
+    @Test
+    fun leapDay_isCountedLikeAnyOtherDay() {
+        val p = CyclePredictor.predict(listOf(closed("2028-02-02"), closed("2028-03-01")), 30, 5, d("2028-03-03"))
+        assertEquals(28, p.stats.cycleLength) // February 2028 has 29 days
+        assertEquals(d("2028-03-29"), p.nextStart)
+
+        val single = CyclePredictor.predict(listOf(closed("2028-02-15")), 28, 5, d("2028-02-20"))
+        assertEquals(15, single.info(d("2028-02-29")).cycleDay)
+        assertEquals(d("2028-03-14"), single.nextStart)
+    }
+
+    @Test
+    fun periodLeftOpenForWeeks_isReadAsEndedAtTheUsualLength() {
+        val today = d("2026-04-28") // opened 26 Mar and never closed
+        val p = CyclePredictor.predict(regular + Bleed(d("2026-03-26"), null), 28, 5, today)
+        assertFalse(p.isOpen)
+        assertEquals(DayKind.PERIOD, p.info(d("2026-03-30")).kind)
+        assertEquals(DayKind.NONE, p.info(d("2026-03-31")).kind)
+        assertEquals(DayKind.NONE, p.info(today).kind)
+        assertEquals(d("2026-04-23"), p.nextStart)
+        assertEquals(5, p.lateDays)
+        assertNull(p.periodAt(today))
+    }
+
+    @Test
+    fun gapThatHidesAMissedEntry_getsNoOvulationOrPhaseEstimate() {
+        // 1 Sep -> 30 Nov is 90 days: some period in between was not logged.
+        val bleeds = listOf(closed("2025-09-01"), closed("2025-11-30"), closed("2025-12-28"))
+        val p = CyclePredictor.predict(bleeds, 28, 5, d("2026-01-05"))
+
+        val guess = p.info(d("2025-11-16")) // 14 days before the next logged start
+        assertEquals(DayKind.NONE, guess.kind)
+        assertNull(guess.ovulation)
+        assertNull(guess.fertile)
+        assertNull(guess.phase)
+        assertEquals(77, guess.cycleDay)
+        assertEquals(Phase.MENSTRUAL, p.info(d("2025-09-03")).phase)
+        assertEquals(DayKind.PERIOD, p.info(d("2025-09-03")).kind)
+
+        // The 28-day cycle right after it is estimated as usual.
+        assertEquals(DayKind.OVULATION, p.info(d("2025-12-14")).kind)
+    }
+
+    @Test
+    fun overdueByMoreThanACycle_stopsProjectingDates() {
+        // Expected 26 Mar; 28 days overdue is still "late", 29 is lapsed.
+        val late = CyclePredictor.predict(regular, 28, 5, d("2026-04-23"))
+        assertFalse(late.lapsed)
+        assertEquals(28, late.lateDays)
+        assertTrue(late.predictedPeriods.isNotEmpty())
+
+        val today = d("2026-04-24")
+        val p = CyclePredictor.predict(regular, 28, 5, today)
+        assertTrue(p.lapsed)
+        assertEquals(29, p.lateDays)
+        assertTrue(p.predictedPeriods.isEmpty())
+        assertNull(p.nextRange)
+        assertEquals(d("2026-02-26"), p.lastStart)
+        val info = p.info(today)
+        assertEquals(DayKind.NONE, info.kind)
+        assertNull(info.phase)
+        assertNull(info.ovulation)
+        assertEquals(DayKind.NONE, p.info(d("2026-05-21")).kind)
+        // What was logged stays as it was.
+        assertEquals(DayKind.PERIOD, p.info(d("2026-02-27")).kind)
+        assertEquals(DayKind.OVULATION, p.info(d("2026-02-12")).kind)
+    }
+
+    @Test
+    fun newPeriodAfterALongGap_resumesPredictionsWithoutCountingTheGap() {
+        val today = d("2026-06-15")
+        val p = CyclePredictor.predict(regular + closed("2026-06-10"), 30, 5, today)
+        assertFalse(p.lapsed)
+        assertEquals(28, p.stats.cycleLength) // the 104-day gap is not a cycle
+        assertEquals(2, p.stats.cyclesUsed)
+        assertEquals(d("2026-07-08"), p.nextStart)
+        assertEquals(DayKind.PREDICTED_PERIOD, p.info(d("2026-07-08")).kind)
+    }
+
+    @Test
+    fun unsortedInput_givesTheSamePrediction() {
+        val today = d("2026-03-05")
+        val a = CyclePredictor.predict(regular, 28, 5, today)
+        val b = CyclePredictor.predict(regular.reversed(), 28, 5, today)
+        assertEquals(a.nextStart, b.nextStart)
+        assertEquals(a.stats, b.stats)
+        assertEquals(a.info(today), b.info(today))
+    }
 }

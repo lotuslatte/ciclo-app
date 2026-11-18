@@ -179,4 +179,22 @@ class PeriodOpsTest {
         val b = Bleed(d("2026-01-29"), d("2026-02-02"))
         assertEquals(listOf(a), PeriodOps.remove(listOf(a, b), d("2026-01-31"), today))
     }
+
+    @Test
+    fun startActionFor_neverEndsAPeriod() {
+        val bleeds = listOf(Bleed(d("2026-02-03"), d("2026-02-07")))
+        // Inside a period: its start moves; the period is not cut short.
+        assertEquals(PeriodAction.MOVE_START_LATER, PeriodOps.startActionFor(bleeds, d("2026-02-05"), today))
+        assertEquals(
+            listOf(Bleed(d("2026-02-05"), d("2026-02-07"))),
+            PeriodOps.apply(bleeds, PeriodAction.MOVE_START_LATER, d("2026-02-05"), today, 5),
+        )
+        // Already the first day, or in the future: nothing to do.
+        assertEquals(null, PeriodOps.startActionFor(bleeds, d("2026-02-03"), today))
+        assertEquals(null, PeriodOps.startActionFor(bleeds, d("2026-03-11"), today))
+        // Outside any period it is the day's usual main action.
+        assertEquals(PeriodAction.START_NEW, PeriodOps.startActionFor(bleeds, d("2026-03-01"), today))
+        assertEquals(PeriodAction.MOVE_START_EARLIER, PeriodOps.startActionFor(bleeds, d("2026-02-01"), today))
+        assertEquals(PeriodAction.START_NEW, PeriodOps.startActionFor(emptyList(), today, today))
+    }
 }

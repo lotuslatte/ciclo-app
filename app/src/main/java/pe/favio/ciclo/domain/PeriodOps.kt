@@ -75,6 +75,18 @@ object PeriodOps {
         }
     }
 
+    /**
+     * The action that makes [d] the first day of a period, for the "it started on another day"
+     * date pickers. Null when [d] already starts one or lies in the future.
+     */
+    fun startActionFor(bleeds: List<Bleed>, d: LocalDate, today: LocalDate): PeriodAction? {
+        if (d.isAfter(today)) return null
+        val c = covering(bleeds, d, today)
+        // Inside a logged period the day's main action is "it ended here", which is not what was asked.
+        if (c != null) return if (d == c.start) null else PeriodAction.MOVE_START_LATER
+        return optionsFor(bleeds, d, today).primary
+    }
+
     /** Applies [action] for day [d]; returns the list unchanged when it doesn't apply. */
     fun apply(bleeds: List<Bleed>, action: PeriodAction, d: LocalDate, today: LocalDate, avgLen: Int): List<Bleed> {
         if (d.isAfter(today)) return bleeds

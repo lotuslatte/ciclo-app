@@ -56,14 +56,15 @@ object CyclePredictor {
     const val MAX_CYCLE = 45
     /** Shortest-to-longest spread above this counts as irregular (FIGO normal variation ≤ 7–9 days). */
     const val IRREGULAR_SPREAD = 9
+    /** Gaps between starts outside this range are almost always a missed or duplicated entry, not a real cycle. */
+    val PLAUSIBLE_CYCLE = 15..60
     private const val HISTORY = 6
     const val PREDICTED_CYCLES = 12
 
     fun stats(bleeds: List<Bleed>, defaultCycle: Int, defaultPeriod: Int): CycleStats {
         val sorted = bleeds.filter { !it.excluded }.sortedBy { it.start }
-        // Gaps outside 15–60 days are almost always a missed or duplicated entry, not a real cycle.
         val cycles = sorted.zipWithNext { a, b -> daysBetween(a.start, b.start) }
-            .filter { it in 15..60 }
+            .filter { it in PLAUSIBLE_CYCLE }
             .takeLast(HISTORY)
         val lengths = sorted.mapNotNull { b -> b.end?.let { daysBetween(b.start, it) + 1 } }
             .filter { it in 1..14 }
@@ -85,7 +86,11 @@ object CyclePredictor {
     }
 
     fun predict(bleeds: List<Bleed>, defaultCycle: Int, defaultPeriod: Int, today: LocalDate): Prediction {
-        val sorted = bleeds.sortedBy { it.start }
+        // A period left open for weeks (the user never tapped "it ended") is read as ended at the usual
+        // length, the same way the next edit would store it. Otherwise it would run up to today, hide a
+        // late period and silence the reminders.
+        val usualPeriod = stats(bleeds, defaultCycle, defaultPeriod).periodLength
+        val sorted = PeriodOps.normalize(bleeds, today, usualPeriod)
         // Excluded bleeds are painted but never start a cycle.
         val counted = sorted.filter { !it.excluded }
         val stats = stats(counted, defaultCycle, defaultPeriod)
@@ -99,8 +104,11 @@ object CyclePredictor {
         }
 
         val nextStart = last?.start?.plusDays(stats.cycleLength.toLong())
+        // More than a whole cycle overdue: a period went unlogged or the cycle paused. Either way the
+        // last start no longer says anything about the coming dates, so nothing is projected from it.
+        val lapsed = open == null && nextStart != null && daysBetween(nextStart, today) > stats.cycleLength
         // Future cycles; when the period is late the overdue one is dropped rather than painted in the past.
-        val predictedStarts = if (last == null) emptyList() else
+        val predictedStarts = if (last == null || lapsed) emptyList() else
             (1..PREDICTED_CYCLES).map { last.start.plusDays(stats.cycleLength.toLong() * it) }
                 .filter { !it.isBefore(today) }
         val predictedPeriods = predictedStarts.map { Span(it, it.plusDays(stats.periodLength - 1L)) }
@@ -115,6 +123,7 @@ object CyclePredictor {
             actualStarts = counted.map { it.start },
             predictedStarts = predictedStarts,
             nextStart = nextStart,
+            lapsed = lapsed,
         )
     }
 }
@@ -132,8 +141,18 @@ class Prediction internal constructor(
     private val predictedStarts: List<LocalDate>,
     /** Expected start of the next period (may be in the past when late). */
     val nextStart: LocalDate?,
+    /**
+     * True when the last logged period is so far back (over one cycle overdue) that no dates are
+     * estimated until a new period is logged.
+     */
+    val lapsed: Boolean = false,
 ) {
+    private val starts: List<LocalDate> = (actualStarts + predictedStarts).distinct().sorted()
+
     val hasData: Boolean get() = actualStarts.isNotEmpty()
+
+    /** First day of the most recent logged period that counts for predictions. */
+    val lastStart: LocalDate? get() = actualStarts.lastOrNull()
 
     val daysUntilNext: Int? get() = nextStart?.let { daysBetween(today, it) }
 
@@ -142,7 +161,7 @@ class Prediction internal constructor(
         get() {
             val next = nextStart ?: return null
             val r = stats.rangeDays.toLong()
-            if (r == 0L || lateDays > 0) return null
+            if (r == 0L || lateDays > 0 || lapsed) return null
             return Span(maxOf(next.minusDays(r), today), next.plusDays(r))
         }
 
@@ -155,16 +174,27 @@ class Prediction internal constructor(
     fun periodAt(d: LocalDate): Span? = actual.firstOrNull { d in it }
 
     fun info(d: LocalDate): DayInfo {
-        val starts = (actualStarts + predictedStarts).distinct().sorted()
         val s = starts.lastOrNull { !it.isAfter(d) }
             ?: return DayInfo(DayKind.NONE, null, null, null, null, null)
 
         // A cycle ends at the next logged period if there is one, otherwise at the expected length.
-        val next = actualStarts.firstOrNull { it.isAfter(s) } ?: s.plusDays(stats.cycleLength.toLong())
+        val nextLogged = actualStarts.firstOrNull { it.isAfter(s) }
+        val next = nextLogged ?: s.plusDays(stats.cycleLength.toLong())
         val length = daysBetween(s, next)
+        val cycleDay = daysBetween(s, d) + 1
+        val inPeriod = actual.any { d in it }
+
+        // Ovulation and phases are only estimated for cycles that look like real ones: not across a
+        // gap that hides a missed entry, and not past the last logged period once it has lapsed.
+        val estimable = if (nextLogged != null) length in CyclePredictor.PLAUSIBLE_CYCLE else !(lapsed && s == lastStart)
+        if (!estimable) {
+            val kind = if (inPeriod) DayKind.PERIOD else DayKind.NONE
+            val bleeding = actual.firstOrNull { it.start == s }?.contains(d) == true
+            return DayInfo(kind, if (bleeding) Phase.MENSTRUAL else null, cycleDay, length, null, null)
+        }
+
         val ovulation = next.minusDays(CyclePredictor.LUTEAL_DAYS)
         val fertile = Span(ovulation.minusDays(5), ovulation.plusDays(1))
-        val cycleDay = daysBetween(s, d) + 1
         val ovDay = daysBetween(s, ovulation) + 1
 
         val logged = actual.firstOrNull { it.start == s }
@@ -180,7 +210,7 @@ class Prediction internal constructor(
             else -> Phase.LUTEA
         }
         val kind = when {
-            actual.any { d in it } -> DayKind.PERIOD
+            inPeriod -> DayKind.PERIOD
             openRemainder?.contains(d) == true || predictedPeriods.any { d in it } -> DayKind.PREDICTED_PERIOD
             d == ovulation -> DayKind.OVULATION
             d in fertile -> DayKind.FERTILE
