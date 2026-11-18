@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -181,17 +182,21 @@ private fun DayCell(
         isSelected -> C.RedLight
         else -> null
     }
+    // The whole cell is the touch target and carries the spoken description, so a screen reader
+    // announces one item per day ("martes 3 de marzo, regla") instead of a bare number.
     Box(
         modifier
             .height(50.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClickLabel = "ver opciones", onClick = onClick)
             .semantics {
-                contentDescription = Fmt.full(date) + when (kind) {
+                contentDescription = Fmt.full(date) + (if (isToday) ", hoy" else "") + when (kind) {
                     DayKind.PERIOD -> ", regla"
                     DayKind.PREDICTED_PERIOD -> ", regla prevista"
                     DayKind.OVULATION -> ", ovulación estimada"
                     DayKind.FERTILE -> ", día fértil estimado"
                     DayKind.NONE -> ""
-                } + (if (hasLog) ", con anotación" else "")
+                } + (if (hasLog) ", con anotación" else "") + (if (isSelected) ", seleccionado" else "")
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -205,14 +210,24 @@ private fun DayCell(
                 .clip(CircleShape)
                 .background(if (inMonth || kind != DayKind.NONE) bg else Color.Transparent)
                 .drawBehind {
-                    if (kind == DayKind.PREDICTED_PERIOD) {
-                        drawCircle(
+                    // Each kind also differs in shape, not only in colour: solid fill (period), dashed
+                    // outline (predicted), thin solid outline (fertile), inner ring (ovulation).
+                    when (kind) {
+                        DayKind.PREDICTED_PERIOD -> drawCircle(
                             C.Red, radius = size.minDimension / 2 - 1.dp.toPx(),
                             style = Stroke(2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))),
                         )
+                        DayKind.FERTILE -> drawCircle(
+                            C.OvulRing, radius = size.minDimension / 2 - 0.75.dp.toPx(),
+                            style = Stroke(1.5.dp.toPx()),
+                        )
+                        DayKind.OVULATION -> drawCircle(
+                            Color.White, radius = size.minDimension / 2 - 2.5.dp.toPx(),
+                            style = Stroke(1.5.dp.toPx()),
+                        )
+                        else -> Unit
                     }
-                }
-                .clickable(onClick = onClick),
+                },
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -253,8 +268,12 @@ private fun Legend() {
             })
         }
         Row {
-            Item("Días fértiles (estimado)", Modifier.weight(1f), Modifier.clip(CircleShape).background(C.Lav))
-            Item("Ovulación (estimada)", Modifier.weight(1f), Modifier.clip(CircleShape).background(C.Ovul))
+            Item("Días fértiles (estimado)", Modifier.weight(1f), Modifier.clip(CircleShape).background(C.Lav).drawBehind {
+                drawCircle(C.OvulRing, radius = size.minDimension / 2 - 0.75.dp.toPx(), style = Stroke(1.5.dp.toPx()))
+            })
+            Item("Ovulación (estimada)", Modifier.weight(1f), Modifier.clip(CircleShape).background(C.Ovul).drawBehind {
+                drawCircle(Color.White, radius = size.minDimension / 2 - 3.dp.toPx(), style = Stroke(1.dp.toPx()))
+            })
         }
         Row {
             Item("Hoy", Modifier.weight(1f), Modifier.drawBehind {

@@ -40,6 +40,8 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -227,7 +229,9 @@ private fun MiniStat(label: String, value: String, modifier: Modifier) {
 private fun BarChart(values: List<Pair<String, Int>>, minV: Int, maxV: Int, bandLo: Int, bandHi: Int) {
     val soft = C.Soft.toArgb()
     val muted = C.Muted.toArgb()
-    Canvas(Modifier.fillMaxWidth().height(170.dp)) {
+    // The chart is drawn on a canvas, so a screen reader gets the same numbers as a sentence.
+    val spoken = values.joinToString(", ") { (label, v) -> "$label: ${Fmt.days(v)}" }
+    Canvas(Modifier.fillMaxWidth().height(170.dp).semantics { contentDescription = spoken }) {
         val top = 20.dp.toPx()
         val bottom = size.height - 20.dp.toPx()
         fun y(v: Int) = bottom - (v.coerceIn(minV, maxV) - minV).toFloat() / (maxV - minV) * (bottom - top)

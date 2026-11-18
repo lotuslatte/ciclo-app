@@ -167,7 +167,7 @@ fun CicloRoot(store: Store, data: AppData) {
         containerColor = C.Bg,
         contentColor = C.Text,
         snackbarHost = {
-            SnackbarHost(snackbar) { Snackbar(it, containerColor = C.Text, contentColor = C.Bg, actionColor = C.Red) }
+            SnackbarHost(snackbar) { Snackbar(it, containerColor = C.Text, contentColor = C.Bg, actionColor = C.RedOnLight) }
         },
         bottomBar = {
             NavigationBar(containerColor = C.Surface) {

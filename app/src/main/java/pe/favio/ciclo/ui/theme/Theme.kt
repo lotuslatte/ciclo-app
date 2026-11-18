@@ -32,6 +32,8 @@ object C {
     val RedText = Color(0xFFFF8093)
     val RedTint = Color(0xFF4A2033)
     val RedLight = Color(0xFFFFB1BD)
+    /** Crimson dark enough for text on the light snackbar (5.8:1 on [Text]). */
+    val RedOnLight = Color(0xFFA92A41)
 
     val Lav = Color(0xFF3A2D5C)
     val LavBorder = Color(0xFF6B58A8)

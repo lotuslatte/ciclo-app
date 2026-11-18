@@ -198,9 +198,9 @@ fun RegistroSheet(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Kicker("Dolor")
                 Text("0 = nada · 10 = el peor dolor imaginable", color = C.Muted, fontSize = 13.sp)
-                // 11 buttons need ~390dp to stay tappable; split in two rows on narrower screens.
+                // 11 buttons of 48dp need about 570dp; phones get two rows so each stays easy to hit.
                 BoxWithConstraints {
-                    val rows = if (maxWidth < 380.dp) listOf(0..5, 6..10) else listOf(0..10)
+                    val rows = if (maxWidth < 570.dp) listOf(0..5, 6..10) else listOf(0..10)
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         rows.forEach { range ->
                             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -258,7 +258,7 @@ fun RegistroSheet(
                 OutlinedTextField(
                     note, { note = it },
                     Modifier.fillMaxWidth(),
-                    placeholder = { Text("Algo que quieras recordar de hoy…", color = C.Faint) },
+                    placeholder = { Text("Algo que quieras recordar de hoy…", color = C.Muted) },
                     minLines = 3,
                     shape = RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(

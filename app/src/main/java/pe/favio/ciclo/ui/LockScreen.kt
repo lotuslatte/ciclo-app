@@ -77,7 +77,10 @@ fun LockScreen(check: (String) -> Boolean, onUnlock: () -> Unit) {
         Text("Ciclo", fontFamily = Fraunces, fontWeight = FontWeight.SemiBold, fontSize = 34.sp)
         Text(if (wrong) "PIN incorrecto, intenta de nuevo" else "Escribe tu PIN", color = if (wrong) C.RedText else C.Muted, fontSize = 15.sp)
         Spacer(Modifier.height(24.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
+            Modifier.semantics { contentDescription = "${pin.length} de ${Pin.LENGTH} números escritos" },
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
             repeat(Pin.LENGTH) { i ->
                 Box(
                     Modifier.size(16.dp).clip(CircleShape)

@@ -316,8 +316,12 @@ private fun ColorsPage() {
         LegendLine("Regla prevista", Modifier.drawBehind {
             drawCircle(C.Red, radius = size.minDimension / 2 - 1.dp.toPx(), style = Stroke(2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 4f))))
         })
-        LegendLine("Días fértiles (estimado)", Modifier.clip(CircleShape).background(C.Lav))
-        LegendLine("Ovulación (estimada)", Modifier.clip(CircleShape).background(C.Ovul))
+        LegendLine("Días fértiles (estimado)", Modifier.clip(CircleShape).background(C.Lav).drawBehind {
+            drawCircle(C.OvulRing, radius = size.minDimension / 2 - 0.75.dp.toPx(), style = Stroke(1.5.dp.toPx()))
+        })
+        LegendLine("Ovulación (estimada)", Modifier.clip(CircleShape).background(C.Ovul).drawBehind {
+            drawCircle(Color.White, radius = size.minDimension / 2 - 3.dp.toPx(), style = Stroke(1.5.dp.toPx()))
+        })
         LegendLine("Hoy", Modifier.drawBehind { drawCircle(C.Text, radius = size.minDimension / 2 - 1.dp.toPx(), style = Stroke(2.dp.toPx())) })
     }
     Body("Las fechas son estimaciones y mejoran a medida que registras más reglas.", C.Muted)

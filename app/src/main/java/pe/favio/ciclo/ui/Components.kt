@@ -25,6 +25,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -80,7 +82,7 @@ fun Kicker(text: String, color: Color = C.Muted, modifier: Modifier = Modifier) 
 
 @Composable
 fun ScreenTitle(text: String, modifier: Modifier = Modifier) {
-    Text(text, modifier, fontFamily = Fraunces, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, color = C.Text)
+    Text(text, modifier.semantics { heading() }, fontFamily = Fraunces, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, color = C.Text)
 }
 
 @Composable

@@ -45,6 +45,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -412,11 +414,19 @@ internal fun StepperRow(title: String, sub: String, value: Int, range: IntRange,
             Text(sub, color = C.Muted, fontSize = 13.sp)
         }
         val colors = IconButtonDefaults.iconButtonColors(containerColor = C.Bg, contentColor = C.Text)
-        IconButton({ onChange((value - 1).coerceIn(range)) }, colors = colors, enabled = enabled && value > range.first) {
+        IconButton(
+            { onChange((value - 1).coerceIn(range)) },
+            Modifier.semantics { contentDescription = "Disminuir: $title" },
+            colors = colors, enabled = enabled && value > range.first,
+        ) {
             Text("−", fontSize = 20.sp)
         }
         Text("$value", Modifier.width(36.dp), color = if (enabled) C.RedText else C.Faint, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
-        IconButton({ onChange((value + 1).coerceIn(range)) }, colors = colors, enabled = enabled && value < range.last) {
+        IconButton(
+            { onChange((value + 1).coerceIn(range)) },
+            Modifier.semantics { contentDescription = "Aumentar: $title" },
+            colors = colors, enabled = enabled && value < range.last,
+        ) {
             Text("+", fontSize = 20.sp)
         }
     }
